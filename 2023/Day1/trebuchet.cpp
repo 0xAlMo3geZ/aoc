@@ -6,6 +6,7 @@
 
 using namespace std;
 
+// Represents a digit with its value and position in a number.
 struct Digit
 {
     int value;
@@ -13,6 +14,15 @@ struct Digit
     Digit(int v, int p) : value(v), position(p) {}
 };
 
+/**
+ * Calculates the total sum of the digits in a file.
+ *
+ * @param None
+ *
+ * @return int - the total sum of the digits in the file
+ *
+ * @throws None
+ */
 int main()
 {
     const string filename = "input.txt";
