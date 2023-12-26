@@ -4,7 +4,7 @@ The Solutions for AoC-2023 in Cpp.
 
 ## Table of Contents
 
-- [Day 1 - Trebuchet?!](./trebuchet.cpp)
+- [Day 1 - Trebuchet?!](./Day1/trebuchet.cpp)
 <!--
 - [Day 2 - Cube Conundrum](d02)
 - [Day 3 - Gear Ratios](d03)
