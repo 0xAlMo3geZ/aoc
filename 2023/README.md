@@ -8,8 +8,8 @@ The Solutions for AoC-2023 in Cpp.
 - [Day 2 - Cube Conundrum](./Day2/CubeConundrum.cpp)
 - [Day 3 - Gear Ratios](./Day3/GearRatios.cpp)
 - [Day 4 - Scratchcards](./Day4/Scratchcards.cpp)
+- [Day 5 - If You Give A Seed A Fertilizer](./Day5/Fertilizer.cpp)
 <!--
-- [Day 5 - If You Give A Seed A Fertilizer](d05)
 - [Day 6 - Wait For It](d06)
 - [Day 7 - Camel Cards](d07)
 - [Day 8 - Haunted Wasteland](d08)
