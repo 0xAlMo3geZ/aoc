@@ -1,5 +1,3 @@
-// https://adventofcode.com/2023/day/5
-
 #include <algorithm>
 #include <cstdlib>
 #include <fstream>
