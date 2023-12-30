@@ -1,131 +1,175 @@
-#include <iostream>
+// https://adventofcode.com/2023/day/5
+
+#include <algorithm>
+#include <cstdlib>
 #include <fstream>
+#include <ios>
+#include <iostream>
+#include <iterator>
+#include <limits>
+#include <numeric>
+#include <regex>
 #include <sstream>
+#include <string>
 #include <vector>
-#include <map>
-#include <limits.h>
 
 using namespace std;
 
-// Structure for representing a map with an ID and a list of cases.
-struct Map
+int p1_total = 0, p2_total = 0;
+
+static const regex map_line_rgx(R"(([a-z]+)-to-([a-z]+) map:)");
+static const regex number_rgx(R"(\d+)");
+
+typedef struct
 {
-    string id;
-    vector<vector<long>> cases;
-};
+    long long dest;
+    long long source;
+    long long len;
+} Range;
+
+typedef struct
+{
+    string from;
+    string to;
+    vector<Range> ranges;
+} Map;
 
 /**
- * Reads seeds from the first line of input.
+ * Traverse the given maps and update the current value based on the ranges.
  *
- * @param first_line the first line of input containing the seeds in the format "seed1:rep1 seed2:rep2 ..."
+ * @param current The current value to be updated.
+ * @param maps The vector of maps containing ranges.
  *
- * @return a map containing the seeds and their corresponding repetitions
+ * @return The updated value of current after traversing the maps.
  *
  * @throws None
  */
-map<long, long> read_seeds(string first_line)
+static long long traverse(long long current, vector<Map> maps)
 {
-    map<long, long> seeds;
-    istringstream iss(first_line);
-
-    iss.ignore(first_line.find(":") + 2);
-
-    long seed, rep;
-    while (iss >> seed)
+    for (Map &map : maps)
     {
-        iss >> rep;
-        seeds[seed] = rep;
+        for (Range &range : map.ranges)
+        {
+            if (current >= range.source && current <= range.source + range.len)
+            {
+                current = range.dest + (current - range.source);
+                break;
+            }
+        }
     }
 
-    return seeds;
+    return current;
 }
 
 /**
- * Reads maps from a file and returns a vector of Map objects.
+ * Calculates the lowest value obtained from traversing multiple maps using a list of seeds.
  *
- * @param file the file stream to read the maps from
+ * @param seeds a vector of long long integers representing the seeds
+ * @param maps a vector of Map objects representing the maps
  *
- * @return a vector of Map objects representing the maps read from the file
+ * @return the lowest value obtained from traversing the maps using the seeds
  *
  * @throws None
  */
-vector<Map> read_maps(fstream &file)
+long long part1(vector<long long> seeds, vector<Map> maps)
 {
-    Map current_map;
-    string line;
-    vector<long> current_case;
-    vector<Map> maps;
-
-    while (getline(file, line))
+    long long lowest = numeric_limits<long>::max();
+    for (auto seed : seeds)
     {
-        if (line.find("map:") != string::npos)
-        {
-            for (int i = 0; i < 4; ++i)
-                line.pop_back();
-            current_map.id = line;
-        }
-        else if (line != "")
-        {
-            long value;
-            istringstream iss(line);
-            while (iss >> value)
-                current_case.push_back(value);
-            current_map.cases.push_back(current_case);
-            current_case = {};
-        }
-        else
-        {
-            maps.push_back(current_map);
-            current_map = {};
-        }
+        long long cur_num = traverse(seed, maps);
+        lowest = min(cur_num, lowest);
     }
-    maps.push_back(current_map);
 
-    return maps;
+    return lowest;
 }
 
 /**
- * Calculates the lowest value of `n` based on the given input file.
+ * Calculates the lowest value obtained from traversing a range of seeds using a list of maps.
  *
- * @return the lowest value of `n`
+ * @param seeds a vector of long long integers representing the seeds to traverse
+ * @param maps a vector of Map objects representing the maps to traverse
  *
- * @throws ErrorType if there is an error reading the input file or performing calculations
+ * @return the lowest long long value obtained from traversing the seeds using the maps
+ *
+ * @throws None
+ */
+long long part2(vector<long long> seeds, vector<Map> maps)
+{
+    long long lowest = numeric_limits<long>::max();
+    for (auto it = seeds.begin(); it != seeds.end(); it += 2)
+    {
+        long long from = *it;
+        long long to = *(it + 1);
+
+        for (auto seed = from; seed < from + to; ++seed)
+        {
+            long long cur_num = traverse(seed, maps);
+            lowest = min(cur_num, lowest);
+        }
+    }
+
+    return lowest;
+}
+
+/**
+ * Reads input from a file and processes it to calculate and print the results.
+ *
+ * @return 0 indicating successful execution
+ *
+ * @throws None
  */
 int main()
 {
-    const string filename = "input.txt";
-    fstream file(filename);
-
+    ifstream input("input.txt");
     string line;
-    long lowest_n = INT64_MAX;
 
-    // read seeds
-    getline(file, line); // blank
-    map<long, long> seeds = read_seeds(line);
+    getline(input, line);
+    std::istringstream iss(line);
+    iss.ignore(6, ':');
+    vector<long long> seeds((std::istream_iterator<long long>(iss)),
+                            std::istream_iterator<long long>());
 
-    // read maps
-    getline(file, line); // blank
-    vector<Map> maps = read_maps(file);
-
-    long current_n;
-    for (auto seed : seeds)
+    vector<Map> maps;
+    Map this_map;
+    getline(input, line);
+    while (getline(input, line))
     {
-        for (long n = 0; n < seed.second; ++n)
+        smatch match;
+
+        if (line.empty())
         {
-            current_n = seed.first + n;
-            for (auto map : maps)
-                for (auto map_case : map.cases)
-                    if (current_n >= map_case[1] && current_n < (map_case[1] + map_case[2]))
-                    {
-                        current_n = map_case[0] + (current_n - map_case[1]);
-                        break;
-                    }
-            if (current_n < lowest_n)
-                lowest_n = current_n;
+            maps.push_back(this_map);
+
+            this_map = {};
+
+            continue;
+        }
+
+        if (regex_search(line, match, map_line_rgx))
+        {
+            this_map.from = match[1].str();
+            this_map.to = match[2].str();
+
+            continue;
+        }
+        else
+        {
+            sregex_iterator it(line.begin(), line.end(), number_rgx), end;
+
+            Range this_range;
+            this_range.dest = strtol(it->str().c_str(), NULL, 10);
+            ++it;
+            this_range.source = strtol(it->str().c_str(), NULL, 10);
+            ++it;
+            this_range.len = strtol(it->str().c_str(), NULL, 10);
+
+            this_map.ranges.push_back(this_range);
         }
     }
+    maps.push_back(this_map);
 
-    cout << lowest_n << endl;
+    cout << part1(seeds, maps) << endl;
+    cout << part2(seeds, maps) << endl;
 
     return 0;
 }
